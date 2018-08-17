@@ -18,7 +18,7 @@ class IndexController extends BaseController
     {
         $user = $this->userRepository->one();
         if ($user === null) {
-            // TODO 404
+            // TODO 404?
         }
 
         return $this->render('index', compact('user'));
