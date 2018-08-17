@@ -48,7 +48,7 @@ abstract class BaseController
      */
     protected function callAction($action)
     {
-        echo static::$action();
+        echo $this->$action();
     }
 
     /**
