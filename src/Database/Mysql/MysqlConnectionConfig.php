@@ -10,7 +10,7 @@ class MysqlConnectionConfig implements ConnectionConfigInterface
     public $driver = 'mysql';
 
     /** @var string */
-    public $host = '127.0.0.1';
+    public $host = '192.168.10.10';
 
     /** @var string */
     public $port = '3306';
@@ -22,5 +22,5 @@ class MysqlConnectionConfig implements ConnectionConfigInterface
     public $password = 'secret';
 
     /** @var string */
-    public $database = 'quiz';
+    public $database = 'quiz2';
 }

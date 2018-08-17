@@ -4,49 +4,61 @@ namespace Quiz\Database\Mysql;
 
 use PDO;
 use PDOStatement;
+use Quiz\Core\Configuration;
 use Quiz\Interfaces\ConnectionInterface;
 
 class MysqlConnection implements ConnectionInterface
 {
-    /**
-     * @var MysqlConnectionConfig
-     */
-    protected $config;
+    private static function formatDSN(string $driver, array $config)
+    {
+        $dsn = "{$driver}:";
+
+        $dsnParts = [];
+        foreach ($config as $key => $value) {
+            $dsnParts[] = "{$key}={$value}";
+        }
+        $dsn .= implode(';', $dsnParts);
+
+        return $dsn;
+    }
 
     /** @var PDO */
     protected $connection;
 
     /**
-     * MysqlConnection constructor.
-     * @param MysqlConnectionConfig|null $config
+     * @param Configuration $config
+     * @throws \Exception
      */
-    public function __construct(MysqlConnectionConfig $config)
+    public function __construct(Configuration $config)
     {
-        $this->config = $config;
-        $this->connect();
+        $dbConfig = $config->get('db');
+        if ($dbConfig === null) {
+            throw new \Exception("Database connection not set up");
+        }
+        $this->connect($dbConfig);
     }
 
-    public function connect()
+    public function connect(array $config)
     {
-        $dsn = $this->getDataSourceName();
-        $this->connection = new PDO($dsn, $this->config->user, $this->config->password);
-    }
-
-    /**
-     * @return string
-     */
-    private function getDataSourceName(): string
-    {
-        return $this->config->driver . ':host=' . $this->config->host . ';charset=utf8;dbname=' . $this->config->database;
+        $driver = $config['driver'];
+        unset($config['driver']);
+        if (array_key_exists(0, $config)) {
+            $dsn = $config[0];
+        } else {
+            $dsn = static::formatDSN($driver, $config);
+        }
+        $user = $config['user'] ?? null;
+        $password = $config['password'] ?? null;
+        $this->connection = new PDO($dsn, $user, $password);
     }
 
     /**
      * @param string $table
      * @param array $conditions
-     * @param array $select
+     * @param array $columns
      * @return array
      */
-    public function select(string $table, array $conditions = [], array $select = []): array
+    public function select(string $table, array $conditions = [], array $columns = []): array
     {
         $conditionSql = '';
         if ($conditions) {
@@ -59,27 +71,18 @@ class MysqlConnection implements ConnectionInterface
             $conditionSql .= implode(' AND ', $conditionStatements);
         }
 
-        $select = $this->buildSelect($select);
+        if (!$columns) {
+            $columns = '*';
+        } else {
+            $columns = implode(', ', $columns);
+        }
 
-        $sql = "SELECT $select FROM $table $conditionSql";
+        $sql = "SELECT $columns FROM $table $conditionSql";
 
         $statement = $this->connection->prepare($sql);
         $statement->execute(array_values($conditions));
 
         return $statement->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    /**
-     * @param array $select
-     * @return string
-     */
-    protected function buildSelect(array $select = []): string
-    {
-        if (!$select) {
-            return '*';
-        }
-
-        return implode(', ', $select);
     }
 
     /**
@@ -94,8 +97,8 @@ class MysqlConnection implements ConnectionInterface
         $attributeSql = implode(', ', array_keys($attributes));
         $valueSql = implode(', ', array_fill(0, count($attributes), '?'));
         $sql = "INSERT INTO $table ($attributeSql) VALUES ($valueSql)";
-        $statement = $this->connection->prepare($sql);
 
+        $statement = $this->connection->prepare($sql);
         return $statement->execute(array_values($attributes));
     }
 
@@ -109,6 +112,11 @@ class MysqlConnection implements ConnectionInterface
         $statement = $this->connection->prepare($sql);
 
         foreach ($params as $key => $param) {
+            // When using array arguments, keys are off by one -- the first
+            // question mark in PDO corresponds to index 1. -pn
+            if (is_int($key)) {
+                $key += 1;
+            }
             $statement->bindValue($key, $param);
         }
 
@@ -128,13 +136,13 @@ class MysqlConnection implements ConnectionInterface
         $updateStatements = [];
 
         foreach ($attributes as $attribute => $value) {
-            $updateStatements[] = implode(' = ', [$attribute, '?']);
+            $updateStatements[] = "{$attribute} = ?";
         }
 
         $updateSql = implode(', ', $updateStatements);
         $sql = "UPDATE $table SET $updateSql WHERE $primaryKeySql";
-        $statement = $this->connection->prepare($sql);
 
+        $statement = $this->connection->prepare($sql);
         return $statement->execute(array_values($attributes));
     }
 

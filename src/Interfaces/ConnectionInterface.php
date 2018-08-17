@@ -7,10 +7,10 @@ interface ConnectionInterface
     /**
      * @param string $table
      * @param array $conditions
-     * @param array $select
+     * @param array $columns
      * @return array
      */
-    public function select(string $table, array $conditions = [], array $select = []): array;
+    public function select(string $table, array $conditions = [], array $columns = []): array;
 
     /**
      * @param string $table
