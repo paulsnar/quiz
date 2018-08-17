@@ -13,10 +13,12 @@ function run()
 {
     $config = app(\Quiz\Core\Configuration::class);
 
-    $requestUrl = 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-    $requestString = substr($requestUrl, strlen($config->get('baseUrl')));
+    $urlParams = explode('/', $_SERVER['REQUEST_URI']);
 
-    $urlParams = explode('/', $requestString);
+    // Remove first empty element due to explode splitting upon the first char:
+    // /hello/world => [ '', 'hello', 'world' ]                             -pn
+    array_shift($urlParams);
+
     $controllerName = ucfirst(array_shift($urlParams));
     $controllerName = $config->get('controllerNamespace') .
         ($controllerName ? $controllerName : 'Index') . 'Controller';
