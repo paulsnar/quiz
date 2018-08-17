@@ -8,6 +8,7 @@ abstract class BaseAjaxController extends BaseController
     {
         $content = static::$action();
 
+        header('Content-Type: application/json; charset=UTF-8');
         echo json_encode(['result' => $content], JSON_UNESCAPED_UNICODE);
     }
 }
