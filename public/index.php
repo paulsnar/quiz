@@ -9,18 +9,23 @@ define('TEMPLATE_DIR', SOURCE_DIR . '/templates');
 
 require_once SOURCE_DIR . '/bootstrap.php';
 
-$config = app(\Quiz\Core\Configuration::class);
+function run()
+{
+    $config = app(\Quiz\Core\Configuration::class);
 
-$requestUrl = 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-$requestString = substr($requestUrl, strlen($config->get('baseUrl')));
+    $requestUrl = 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+    $requestString = substr($requestUrl, strlen($config->get('baseUrl')));
 
-$urlParams = explode('/', $requestString);
-$controllerName = ucfirst(array_shift($urlParams));
-$controllerName = $config->get('controllerNamespace') .
-    ($controllerName ? $controllerName : 'Index') . 'Controller';
-$actionName = strtolower(array_shift($urlParams));
-$actionName = ($actionName ? $actionName : 'index') . 'Action';
+    $urlParams = explode('/', $requestString);
+    $controllerName = ucfirst(array_shift($urlParams));
+    $controllerName = $config->get('controllerNamespace') .
+        ($controllerName ? $controllerName : 'Index') . 'Controller';
+    $actionName = strtolower(array_shift($urlParams));
+    $actionName = ($actionName ? $actionName : 'index') . 'Action';
 
-/** @var BaseController $controller */
-$controller = app($controllerName);
-$controller->handleCall($actionName);
+    /** @var BaseController $controller */
+    $controller = app($controllerName);
+    $controller->handleCall($actionName);
+}
+
+run();
