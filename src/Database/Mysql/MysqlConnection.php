@@ -4,7 +4,6 @@ namespace Quiz\Database\Mysql;
 
 use PDO;
 use PDOStatement;
-use Quiz\Database\ConnectionFactory;
 use Quiz\Interfaces\ConnectionInterface;
 
 class MysqlConnection implements ConnectionInterface
@@ -21,12 +20,8 @@ class MysqlConnection implements ConnectionInterface
      * MysqlConnection constructor.
      * @param MysqlConnectionConfig|null $config
      */
-    public function __construct(MysqlConnectionConfig $config = null)
+    public function __construct(MysqlConnectionConfig $config)
     {
-        if (!$config) {
-            $config = ConnectionFactory::getDriverConfig();
-        }
-
         $this->config = $config;
         $this->connect();
     }
