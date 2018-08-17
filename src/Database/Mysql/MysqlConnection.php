@@ -38,7 +38,7 @@ class MysqlConnection implements ConnectionInterface
         $this->connect($dbConfig);
     }
 
-    public function connect(array $config)
+    private function connect(array $config)
     {
         $driver = $config['driver'];
         unset($config['driver']);
@@ -54,6 +54,61 @@ class MysqlConnection implements ConnectionInterface
 
     /**
      * @param string $table
+     * @return array
+     */
+    public function fetchColumns(string $table): array
+    {
+        $statement = $this->connection->prepare("DESCRIBE $table");
+        $statement->execute();
+
+        return $statement->fetchAll(PDO::FETCH_COLUMN);
+    }
+
+    /**
+     * @param array $attributes
+     * @param string $primaryKey
+     * @return array
+     */
+    protected function prepareAttributes(array $attributes, string $primaryKey): array
+    {
+        if (isset($attributes[$primaryKey])) {
+            unset($attributes[$primaryKey]);
+        }
+
+        return $attributes;
+    }
+
+    /**
+     * @return int
+     */
+    public function getLastInsertId(): int
+    {
+        return $this->connection->lastInsertId();
+    }
+
+    /**
+     * @param string $sql
+     * @param array $params
+     * @return PDOStatement
+     */
+    protected function prepareStatement(string $sql, array $params): PDOStatement
+    {
+        $statement = $this->connection->prepare($sql);
+
+        foreach ($params as $key => $param) {
+            // When using array arguments, keys are off by one -- the first
+            // question mark in PDO corresponds to index 1. -pn
+            if (is_int($key)) {
+                $key += 1;
+            }
+            $statement->bindValue($key, $param);
+        }
+
+        return $statement;
+    }
+
+    /**
+     * @param string $table
      * @param array $conditions
      * @param array $columns
      * @return array
@@ -65,7 +120,7 @@ class MysqlConnection implements ConnectionInterface
             $conditionStatements = [];
             $conditionSql = 'WHERE ';
             foreach ($conditions as $attribute => $value) {
-                $conditionStatements[] = implode(' = ', [$attribute, '?']);
+                $conditionStatements[] = "{$attribute} = ?";
             }
 
             $conditionSql .= implode(' AND ', $conditionStatements);
@@ -103,27 +158,6 @@ class MysqlConnection implements ConnectionInterface
     }
 
     /**
-     * @param string $sql
-     * @param array $params
-     * @return PDOStatement
-     */
-    protected function prepareStatement(string $sql, array $params): PDOStatement
-    {
-        $statement = $this->connection->prepare($sql);
-
-        foreach ($params as $key => $param) {
-            // When using array arguments, keys are off by one -- the first
-            // question mark in PDO corresponds to index 1. -pn
-            if (is_int($key)) {
-                $key += 1;
-            }
-            $statement->bindValue($key, $param);
-        }
-
-        return $statement;
-    }
-
-    /**
      * @param string $table
      * @param string $primaryKey
      * @param array $attributes
@@ -146,37 +180,4 @@ class MysqlConnection implements ConnectionInterface
         return $statement->execute(array_values($attributes));
     }
 
-    /**
-     * @param string $table
-     * @return array
-     */
-    public function fetchColumns(string $table): array
-    {
-        $statement = $this->connection->prepare("DESCRIBE $table");
-        $statement->execute();
-
-        return $statement->fetchAll(PDO::FETCH_COLUMN);
-    }
-
-    /**
-     * @param array $attributes
-     * @param string $primaryKey
-     * @return array
-     */
-    protected function prepareAttributes(array $attributes, string $primaryKey): array
-    {
-        if (isset($attributes[$primaryKey])) {
-            unset($attributes[$primaryKey]);
-        }
-
-        return $attributes;
-    }
-
-    /**
-     * @return int
-     */
-    public function getLastInsertId(): int
-    {
-        return $this->connection->lastInsertId();
-    }
 }
