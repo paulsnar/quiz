@@ -17,6 +17,9 @@ class IndexController extends BaseController
     public function indexAction()
     {
         $user = $this->userRepository->one();
+        if ($user === null) {
+            // TODO 404?
+        }
 
         return $this->render('index', compact('user'));
     }

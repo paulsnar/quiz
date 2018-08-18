@@ -1,16 +1,3 @@
-<?php
-/**
- * @var User $user
- */
-
-use Quiz\Models\User;
-
-?>
-<html>
-<head>
-    <meta charset="UTF-8">
-</head>
-<body>
 <div class="container">
     <h1>Hello <?= $user->name; ?></h1>
     <form id="user-form" method="POST" action="<?= "ajax/saveUser"; ?>">
@@ -43,5 +30,3 @@ use Quiz\Models\User;
         });
     })();
 </script>
-</body>
-</html>
