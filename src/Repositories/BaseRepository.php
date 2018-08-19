@@ -120,9 +120,7 @@ abstract class BaseRepository implements RepositoryInterface
      */
     public function getAttributes($model): array
     {
-        if (!$model->attributes) {
-            $model = $this->prepareAttributes($model);
-        }
+        $model = $this->prepareAttributes($model);
 
         return $model->attributes;
     }
