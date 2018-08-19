@@ -56,7 +56,6 @@ abstract class BaseRepository implements RepositoryInterface
         /** @var BaseModel $instance */
         $instance = new $class;
         $instance->setAttributes($attributes);
-        $this->prepareAttributes($instance);
 
         return $instance;
     }
